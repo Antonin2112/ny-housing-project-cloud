@@ -13,6 +13,11 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
       - ./housing.csv:/housing.csv
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s    # vérifie toutes les 5s
+      timeout: 5s     # attend max 5s une réponse
+      retries: 5      # déclare "healthy" après 5 succès consécutifs
   web:
     build: ./app
     env_file: .env
@@ -23,6 +28,7 @@ services:
     ports:
       - "5000:5000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 volumes:
   postgres_data:
