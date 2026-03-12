@@ -1,13 +1,14 @@
-from flask import Flask
+import os 
+from flask import Flask, request
 from psycopg2 import connect, sql
 
 app = Flask(__name__)
 
 def get_db_connection():
     conn = connect(
-        dbname='ny_housing',
-        user='user',
-        password='mdpdev',
+        dbname=os.environ['POSTGRES_DB'],
+        user=os.environ['POSTGRES_USER'],
+        password=os.environ['POSTGRES_PASSWORD'],
         host='db',
         port='5432'
     )
@@ -36,6 +37,32 @@ def stats():
         response += f"<li>{row[0]}: {row[1]:.2f}</li>"
     response += "</ul>"
     return response
+
+@app.route('/houses')
+def houses():
+    locality = request.args.get('locality', 'New York')
+    limit    = request.args.get('limit', 20, type=int)
+
+    conn = get_db_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute('''
+            SELECT LOCALITY, PRICE, BEDS, BATH, PROPERTYSQFT
+            FROM housing
+            WHERE LOCALITY = %s
+            ORDER BY PRICE DESC
+            LIMIT %s;
+        ''', (locality, limit))
+        rows = cur.fetchall()
+        cur.close()
+    finally:
+        conn.close()
+
+    result = f"<h3>Houses in {locality}</h3><ul>"
+    for r in rows:
+        result += f"<li>{r[0]} — ${r[1]:,.0f} | {r[2]}bd {r[3]}ba | {r[4]}sqft</li>"
+    result += "</ul>"
+    return result
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

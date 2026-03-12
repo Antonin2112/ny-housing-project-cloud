@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 URL="http://localhost:5000/stats"
 NB_REQUESTS=3000
-CONCURRENCY = 10
+CONCURRENCY = 200
 
 def send_request(i):
     try:
@@ -14,7 +14,7 @@ def send_request(i):
         print(f"\nError during request {i+1}: {e}")
 
 
-print(f"Sending {NB_REQUESTS} requests to {URL}...")
+print(f"Sending {NB_REQUESTS} concurrent requests, with {CONCURRENCY}  to {URL}...")
 
 start_time = time.perf_counter()
 
