@@ -9,4 +9,4 @@ RUN pip3 install -r requirements.txt
 COPY . .
 
 #CMD [ "python3", "app.py" ]
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app", "--workers", "200"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app", "--workers", "20"]
