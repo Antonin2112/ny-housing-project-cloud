@@ -1,4 +1,6 @@
 import os 
+import json 
+import redis
 from flask import Flask, request
 from psycopg2 import pool 
 from psycopg2 import connect, sql
@@ -14,6 +16,10 @@ connection_pool = pool.SimpleConnectionPool(
     host='db',
     port='5432'
 )
+
+redis_client = redis.Redis(host='redis', port=6379, decode_responses=True)
+CACHE_TTL = 60 #secondes
+
 def get_db_connection():
     return connection_pool.getconn()
 
@@ -35,6 +41,13 @@ def index():
 
 @app.route('/stats')
 def stats():
+
+    # on cherche d'abord dans le cache Redis
+    cached = redis_client.get('cache:stats')
+    if cached:
+        return cached
+    
+    #sinon on interroge postgreSQL 
     conn = get_db_connection()
     try: 
         cur = conn.cursor()
@@ -47,12 +60,22 @@ def stats():
     for row in rows:
         response += f"<li>{row[0]}: {row[1]:.2f}</li>"
     response += "</ul>"
+
+    redis_client.setex('cache:stats', CACHE_TTL, response)  # stocker dans le cache pour 60s
+
     return response
 
 @app.route('/houses')
 def houses():
     locality = request.args.get('locality', 'New York')
     limit    = request.args.get('limit', 20, type=int)
+
+    cached_key= f'cache:houses:{locality}:{limit}'
+
+    # on cherche d'abord dans le cache Redis
+    cached = redis_client.get(cached_key)
+    if cached:
+        return cached
 
     conn = get_db_connection()
     try:
@@ -73,6 +96,9 @@ def houses():
     for r in rows:
         result += f"<li>{r[0]} — ${r[1]:,.0f} | {r[2]}bd {r[3]}ba | {r[4]}sqft</li>"
     result += "</ul>"
+
+    redis_client.setex(cached_key, CACHE_TTL, result)  # stocker dans le cache pour 60s
+    
     return result
 
 if __name__ == '__main__':

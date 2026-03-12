@@ -18,6 +18,16 @@ services:
       interval: 5s    # vérifie toutes les 5s
       timeout: 5s     # attend max 5s une réponse
       retries: 5      # déclare "healthy" après 5 succès consécutifs
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  
   web:
     build: ./app
     env_file: .env
@@ -29,6 +39,8 @@ services:
       - "5000:5000"
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 volumes:
   postgres_data:

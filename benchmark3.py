@@ -6,8 +6,8 @@ from concurrent.futures import ThreadPoolExecutor
 # ─────────────────────────────────────────────
 #  Configuration
 # ─────────────────────────────────────────────
-#URL = "http://localhost:5000/stats"
-URL = "http://localhost:5000/houses?locality=New York"
+URL = "http://localhost:5000/stats"
+#URL = "http://localhost:5000/houses?locality=New York"
 NB_REQUESTS = 5000
 CONCURRENCY = 300
 TIMEOUT     = 10  # secondes avant de considérer une requête comme échouée
