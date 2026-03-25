@@ -1,15 +1,17 @@
 import os 
 import json 
 import redis
+import time
+import threading
 from flask import Flask, request
 from psycopg2 import pool 
-from psycopg2 import connect, sql
+
 
 app = Flask(__name__)
 
 connection_pool = pool.SimpleConnectionPool(
-    minconn=2,   # connexions ouvertes dès le départ
-    maxconn=10,  # maximum de connexions simultanées vers PG
+    minconn=1,   # connexions ouvertes dès le départ
+    maxconn=2,  # maximum de connexions simultanées vers PG
     dbname=os.environ.get('POSTGRES_DB'),
     user=os.environ.get('POSTGRES_USER'),
     password=os.environ.get('POSTGRES_PASSWORD'),
@@ -27,6 +29,8 @@ def release_connection(conn):
     connection_pool.putconn(conn)
 
 
+
+
 @app.route('/')
 def index():
     conn = get_db_connection()
@@ -38,6 +42,8 @@ def index():
     finally:
         release_connection(conn)
     return f'Connected to PostgreSQL database. Number of rows in housing table: {count}'
+
+
 
 @app.route('/stats')
 def stats():
@@ -70,12 +76,12 @@ def houses():
     locality = request.args.get('locality', 'New York')
     limit    = request.args.get('limit', 20, type=int)
 
-    cached_key= f'cache:houses:{locality}:{limit}'
+    # cached_key= f'cache:houses:{locality}:{limit}'
 
-    # on cherche d'abord dans le cache Redis
-    cached = redis_client.get(cached_key)
-    if cached:
-        return cached
+    # # on cherche d'abord dans le cache Redis
+    # cached = redis_client.get(cached_key)
+    # if cached:
+    #    return cached
 
     conn = get_db_connection()
     try:
@@ -97,7 +103,7 @@ def houses():
         result += f"<li>{r[0]} — ${r[1]:,.0f} | {r[2]}bd {r[3]}ba | {r[4]}sqft</li>"
     result += "</ul>"
 
-    redis_client.setex(cached_key, CACHE_TTL, result)  # stocker dans le cache pour 60s
+    # redis_client.setex(cached_key, CACHE_TTL, result)  # stocker dans le cache pour 60s
     
     return result
 

@@ -1,34 +1,52 @@
 import requests
 import time
+import random
 import statistics
 from concurrent.futures import ThreadPoolExecutor
 
 # ─────────────────────────────────────────────
 #  Configuration
 # ─────────────────────────────────────────────
-URL = "http://localhost:5000/stats"
-#URL = "http://localhost:5000/houses?locality=New York"
-NB_REQUESTS = 100000
-CONCURRENCY = 300
-TIMEOUT     = 10  # secondes avant de considérer une requête comme échouée
+BASE_URL    = "http://localhost:5000/houses"
+NB_REQUESTS = 5000
+CONCURRENCY = 100
+TIMEOUT     = 10
+
+# Localities réelles du dataset NY Housing
+LOCALITIES = [
+    "Bronx County",
+    "Brooklyn",
+    "Flatbush",
+    "Kings County",
+    "New York",
+    "New York County",
+    "Queens",
+    "Queens County",
+    "Richmond County",
+    "The Bronx",
+    "United States",
+]
 
 # ─────────────────────────────────────────────
 #  Collecte des résultats
 # ─────────────────────────────────────────────
-latencies = []   # temps de réponse en secondes (requêtes réussies)
-errors    = []   # messages d'erreur
+latencies = []
+errors    = []
 
 def send_request(i):
+    locality = random.choice(LOCALITIES)
+    url = f"{BASE_URL}?locality={requests.utils.quote(locality)}&limit=20"
     try:
         t0 = time.perf_counter()
-        r  = requests.get(URL, timeout=TIMEOUT)
+        r  = requests.get(url, timeout=TIMEOUT)
         t1 = time.perf_counter()
 
-        latency_ms = (t1 - t0) * 1000  # convertir en millisecondes
+        latency_ms = (t1 - t0) * 1000
 
         if r.status_code == 200:
             latencies.append(latency_ms)
-            print(".", end="", flush=True)
+            if len(latencies) % 1000 == 0:
+                print(".", end="", flush=True)
         else:
             errors.append(f"HTTP {r.status_code}")
             print("E", end="", flush=True)
@@ -38,15 +56,16 @@ def send_request(i):
         print("T", end="", flush=True)
     except Exception as e:
         errors.append(str(e))
-        print("X", end="", flush=True)
+        print(f"\nX [{type(e).__name__}]: {e}", flush=True)
 
 
 # ─────────────────────────────────────────────
 #  Lancement du test
 # ─────────────────────────────────────────────
 print(f"\n{'='*55}")
-print(f"  Benchmark — {URL}")
+print(f"  Benchmark — {BASE_URL} (localities aléatoires)")
 print(f"  {NB_REQUESTS} requêtes  |  {CONCURRENCY} utilisateurs simultanés")
+print(f"  {len(LOCALITIES)} localities possibles")
 print(f"{'='*55}")
 print("Légende : (.) succès  (E) erreur HTTP  (T) timeout  (X) exception\n")
 
@@ -60,10 +79,10 @@ total_time = time.perf_counter() - start
 # ─────────────────────────────────────────────
 #  Calcul des métriques
 # ─────────────────────────────────────────────
-nb_success   = len(latencies)
-nb_errors    = len(errors)
-error_rate   = (nb_errors / NB_REQUESTS) * 100
-throughput   = nb_success / total_time  # req/s
+nb_success = len(latencies)
+nb_errors  = len(errors)
+error_rate = (nb_errors / NB_REQUESTS) * 100
+throughput = nb_success / total_time
 
 if latencies:
     latencies_sorted = sorted(latencies)
@@ -77,12 +96,12 @@ else:
     p50 = p95 = p99 = avg = min_l = max_l = 0
 
 # ─────────────────────────────────────────────
-#  Affichage du rapport
+#  Affichage
 # ─────────────────────────────────────────────
 print(f"\n\n{'='*55}")
 print(f"  RÉSULTATS")
 print(f"{'='*55}")
-print(f"  URL testée          : {URL}")
+print(f"  URL testée          : {BASE_URL}?locality=<random>")
 print(f"  Requêtes totales    : {NB_REQUESTS}")
 print(f"  Concurrence         : {CONCURRENCY} workers")
 print(f"{'─'*55}")
@@ -99,9 +118,3 @@ print(f"  p50 (médiane)       : {p50:.1f} ms")
 print(f"  p95                 : {p95:.1f} ms  ← 95% des requêtes sont sous cette valeur")
 print(f"  p99                 : {p99:.1f} ms  ← queue de distribution (pires cas)")
 print(f"{'='*55}\n")
-
-# Résumé en une ligne facile à copier dans un rapport
-#print(f"  Résumé CSV (à copier dans votre rapport) :")
-#print(f"  config,req/s,p50_ms,p95_ms,p99_ms,errors_%")
-#print(f"  VOTRE_CONFIG,{throughput:.1f},{p50:.1f},{p95:.1f},{p99:.1f},{error_rate:.1f}")
-#print()

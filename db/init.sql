@@ -20,4 +20,4 @@ CREATE TABLE IF NOT EXISTS housing (
 
 COPY housing FROM '/housing.csv' DELIMITER ',' CSV HEADER;
 
---CREATE INDEX idx_locality ON housing(LOCALITY);
+CREATE INDEX idx_locality ON housing(LOCALITY);
