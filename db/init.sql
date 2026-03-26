@@ -20,4 +20,5 @@ CREATE TABLE IF NOT EXISTS housing (
 
 COPY housing FROM '/housing.csv' DELIMITER ',' CSV HEADER;
 
-CREATE INDEX idx_locality ON housing(LOCALITY);
+DROP INDEX IF EXISTS idx_locality;
+CREATE INDEX idx_locality_price ON housing(LOCALITY, PRICE DESC);

@@ -1,4 +1,4 @@
-Flask
-psycopg2-binary #prostgreSQL adapter for Python
-gunicorn
+fastapi
+asyncpg
+uvicorn[standard]
 redis

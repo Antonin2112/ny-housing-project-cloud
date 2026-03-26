@@ -8,8 +8,8 @@ from concurrent.futures import ThreadPoolExecutor
 #  Configuration
 # ─────────────────────────────────────────────
 BASE_URL    = "http://localhost:5000/houses"
-NB_REQUESTS = 5000
-CONCURRENCY = 100
+NB_REQUESTS = 100_000
+CONCURRENCY = 300
 TIMEOUT     = 10
 
 # Localities réelles du dataset NY Housing
@@ -49,14 +49,14 @@ def send_request(i):
                 print(".", end="", flush=True)
         else:
             errors.append(f"HTTP {r.status_code}")
-            print("E", end="", flush=True)
+        #     print("E", end="", flush=True)
 
     except requests.exceptions.Timeout:
         errors.append("timeout")
-        print("T", end="", flush=True)
+        #print("T", end="", flush=True)
     except Exception as e:
         errors.append(str(e))
-        print(f"\nX [{type(e).__name__}]: {e}", flush=True)
+        #print(f"\nX [{type(e).__name__}]: {e}", flush=True)
 
 
 # ─────────────────────────────────────────────
