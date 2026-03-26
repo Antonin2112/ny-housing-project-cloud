@@ -18,7 +18,7 @@ async def lifespan(app: FastAPI):
         host='db',
         port=5432,
         min_size=10,
-        max_size=10,
+        max_size=25,
         command_timeout=5.0
     )
     app.state.redis = aioredis.Redis(host='redis', port=6379, decode_responses=True)
