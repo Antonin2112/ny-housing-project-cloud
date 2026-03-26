@@ -84,5 +84,14 @@ services:
       - web_2
       - web_3
 
+  benchmark:
+    build: ./benchmark
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./benchmark_k6.js:/scripts/benchmark_k6.js:ro
+    depends_on:
+      - nginx
+
 volumes:
   postgres_data:

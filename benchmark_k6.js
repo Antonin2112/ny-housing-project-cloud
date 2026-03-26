@@ -5,8 +5,8 @@ import { check } from 'k6';
 //  Configuration de la charge
 // ─────────────────────────────────────────────
 export const options = {
-  vus: 300,             // CONCURRENCY: 300 utilisateurs simultanés
-  iterations: 1000000,   // NB_REQUESTS: 100 000 requêtes au total
+  vus: 100,             // CONCURRENCY: 300 utilisateurs simultanés
+  iterations: 100_000,   // NB_REQUESTS: 100 000 requêtes au total
 };
 
 // Localities réelles du dataset NY Housing
@@ -24,7 +24,7 @@ const LOCALITIES = [
   "United States",
 ];
 
-const BASE_URL = "http://localhost:5000/houses";
+const BASE_URL = __ENV.BASE_URL || "http://localhost:5000/houses";
 
 export default function () {
   // Choix aléatoire d'une localité
